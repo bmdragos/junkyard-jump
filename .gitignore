@@ -1,0 +1,11 @@
+# Original Director source files
+*.dcr
+*.dir
+*.dat
+
+# Dev/reference artifacts
+decompiled/
+reference/
+assets3/
+fix_sounds.py
+FINDINGS.md
