@@ -889,7 +889,7 @@ function computeJumpArc() {
   let x = 50, y = debug.groundY - 30;
   let vSpeed = debug.jumpVSpeed;
   let goingUp = true;
-  const hSpeed = debug.launchSpeed * 0.2;
+  const hSpeed = debug.launchSpeed * 0.215;
   for (let t = 0; t < 300; t++) {
     points.push({ x, y });
     if (goingUp) {
@@ -995,7 +995,7 @@ function updateJumpTab() {
         debug.simGoingUp = false; debug.simVSpeed += debug.gravity; debug.simCarY += debug.simVSpeed;
       } else { debug.simVSpeed -= debug.gravity; debug.simCarY -= debug.simVSpeed; }
     } else { debug.simVSpeed += debug.gravity; debug.simCarY += debug.simVSpeed; }
-    debug.simCarX += debug.launchSpeed * 0.2;
+    debug.simCarX += debug.launchSpeed * 0.215;
     if (debug.simCarY > debug.groundY + 30) debug.simRunning = false;
   }
 }
@@ -1460,27 +1460,31 @@ stateUpdate.driving = function() {
   }
   game.prevSpeed = game.speed;
 
-  // Blown engine check
+  // Blown engine tracking
   if (game.tachAngle >= 270) {
     game.maxedFrames++;
-    if (game.maxedFrames >= BLOWN_ENGINE_FRAMES) {
-      game.speed = 0;
-      stopAllSounds();
-      playSound('meltdown');
-      setState('blownengine');
-      return;
-    }
   } else {
     game.maxedFrames = 0;
   }
 
-  // Ramp trigger
+  // Ramp trigger (checked before blown engine so reaching the ramp on the
+  // same frame as engine blow rewards the player instead of punishing them)
   if (game.distance <= 0) {
     if (game.speed > 5) {
       stopAllSounds();
       playSound('ramp');
       setState('jump');
+      return;
     }
+  }
+
+  // Blown engine check
+  if (game.maxedFrames >= BLOWN_ENGINE_FRAMES) {
+    game.speed = 0;
+    stopAllSounds();
+    playSound('meltdown');
+    setState('blownengine');
+    return;
   }
 };
 
@@ -1497,7 +1501,8 @@ stateRender.driving = function() {
   const gy = GAME_H - 90;
   ctx.drawImage(IMG.tachometer, gx, gy);
   ctx.drawImage(IMG.speedometer, gx + 85, gy);
-  drawNeedle(gx + 40, gy + 40, game.tachAngle + 330);
+  const tachJitter = game.tachAngle < 5 ? (Math.random() - 0.5) * 6 : 0;
+  drawNeedle(gx + 40, gy + 40, game.tachAngle + 330 + tachJitter);
   drawNeedle(gx + 125, gy + 40, game.speed * 3 + 270);
 
   // Distance
@@ -1518,7 +1523,7 @@ stateEnter.jump = function() {
   game.goingUp = true;
   game.carX = 50;
   game.carY = game.groundY - 30;
-  game.jumpHSpeed = game.speed * 0.2;
+  game.jumpHSpeed = game.speed * 0.215;
   game.timer = 0;
 };
 
@@ -1556,9 +1561,9 @@ stateUpdate.jump = function() {
     h: 40
   };
 
-  // Check trash piles
+  // Check trash piles (grace period: car needs 6 frames to clear pile height at any speed)
   for (const pile of layout.piles) {
-    if (rectsOverlap(carBounds, pile)) {
+    if (game.timer > 5 && rectsOverlap(carBounds, pile)) {
       stopAllSounds();
       playSound('crash');
       game.crashed = 1;
@@ -1665,6 +1670,11 @@ stateRender.jump = function() {
 // ============================================================
 stateEnter.safe = function() {
   game.crashed = 0;
+  // After final jump, go straight to win screen
+  if (game.junkPiles >= 6) {
+    game.money += game.prizeMoney;
+    setState('win');
+  }
 };
 
 stateRender.safe = function() {
