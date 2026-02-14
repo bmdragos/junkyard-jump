@@ -73,7 +73,7 @@ const IMG = {};
 const SFX = {};
 let gameState = 'loading';
 let prevState = '';
-let gameMode = 'modern'; // 'classic' or 'modern'
+let gameMode = 'classic'; // 'classic' or 'modern'
 
 // Input
 const input = { spaceDown: false, clicked: false, clickX: 0, clickY: 0, mouseX: 0, mouseY: 0, keys: '', mouseDown: false, mouseDownX: 0, mouseDownY: 0 };
@@ -519,10 +519,10 @@ stateEnter.splash = function() {
 stateRender.splash = function() {
   ctx.drawImage(IMG.splashpage, 0, 0, GAME_W, GAME_H);
 
-  // Mode toggle
-  const modeLabel = gameMode === 'modern' ? 'MODERN' : 'CLASSIC';
+  // Mode toggle — above START button
+  const modeLabel = gameMode === 'modern' ? '[ MODERN ]' : '[ CLASSIC ]';
   const modeColor = gameMode === 'modern' ? '#00FF88' : '#FFD700';
-  drawText('MODE: ' + modeLabel, 68, 280, { font: FONT_SMALL, color: modeColor });
+  drawText(modeLabel, 380, 128, { font: FONT_SMALL, color: modeColor });
 };
 
 stateUpdate.splash = function() {
@@ -530,8 +530,8 @@ stateUpdate.splash = function() {
   checkEasterEggs();
 
   if (input.clicked) {
-    // Mode toggle (bottom-left)
-    if (input.clickX < 140 && input.clickY > 265) {
+    // Mode toggle (above START button)
+    if (input.clickX > 330 && input.clickX < 425 && input.clickY > 115 && input.clickY < 140) {
       gameMode = gameMode === 'modern' ? 'classic' : 'modern';
       return;
     }
