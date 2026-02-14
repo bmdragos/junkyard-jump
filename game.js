@@ -88,7 +88,7 @@ function loadAssets(onProgress, onDone) {
   function tick() {
     loaded++;
     onProgress(loaded / total);
-    if (loaded >= total) onDone();
+    if (loaded >= total) { loadEngineBuffer(); onDone(); }
   }
 
   IMAGE_NAMES.forEach(name => {
@@ -137,6 +137,53 @@ function playBeep(freq, duration) {
 let currentLoop = null;
 let currentLoopName = '';
 
+// Engine pitch shifting via Web Audio API
+let engineBuffer = null;
+let engineSource = null;
+let engineGain = null;
+
+function loadEngineBuffer() {
+  const ctx = getAudioCtx();
+  fetch('assets/sounds/hotrod.wav')
+    .then(r => r.arrayBuffer())
+    .then(buf => ctx.decodeAudioData(buf))
+    .then(decoded => { engineBuffer = decoded; })
+    .catch(() => { console.warn('Failed to load engine buffer'); });
+}
+
+function startEngine() {
+  stopEngine();
+  const ctx = getAudioCtx();
+  if (!engineBuffer) { playSound('hotrod', true); return; }
+  engineSource = ctx.createBufferSource();
+  engineSource.buffer = engineBuffer;
+  engineSource.loop = true;
+  engineSource.playbackRate.value = 0.7;
+  engineGain = ctx.createGain();
+  engineGain.gain.value = 0.8;
+  engineSource.connect(engineGain);
+  engineGain.connect(ctx.destination);
+  engineSource.start();
+}
+
+function updateEnginePitch(speed) {
+  if (!engineSource) return;
+  // Map speed 0-100 → playbackRate 0.7-1.5
+  engineSource.playbackRate.value = 0.7 + (speed / 100) * 0.8;
+}
+
+function stopEngine() {
+  if (engineSource) {
+    try { engineSource.stop(); } catch (e) {}
+    engineSource.disconnect();
+    engineSource = null;
+  }
+  if (engineGain) {
+    engineGain.disconnect();
+    engineGain = null;
+  }
+}
+
 function playSound(name, loop) {
   const snd = SFX[name];
   if (!snd) return;
@@ -168,6 +215,7 @@ function stopLoop() {
 
 function stopAllSounds() {
   stopLoop();
+  stopEngine();
 }
 
 // --- INPUT ---
@@ -1441,7 +1489,7 @@ stateUpdate.lightrun = function() {
   if (game.timer === 15) { game.lightPhase = 1; playBeep(330, 0.15); }
   if (game.timer === 30) { game.lightPhase = 2; playBeep(660, 0.3); }
   if (game.timer >= 45) {
-    playSound('hotrod', true);
+    startEngine();
     setState('driving');
   }
 };
@@ -1460,6 +1508,7 @@ stateUpdate.driving = function() {
   } else {
     game.speed = Math.max(game.speed - DECEL, 0);
   }
+  updateEnginePitch(game.speed);
 
   // Parallax
   game.scrollCity = (game.scrollCity + Math.abs(game.speed) / 15) % 850;
