@@ -522,7 +522,7 @@ stateRender.splash = function() {
   // Mode toggle — above START button
   const modeLabel = gameMode === 'modern' ? '[ MODERN ]' : '[ CLASSIC ]';
   const modeColor = gameMode === 'modern' ? '#00FF88' : '#FFD700';
-  drawText(modeLabel, 380, 128, { font: FONT_SMALL, color: modeColor });
+  drawText(modeLabel, 365, 118, { font: FONT_SMALL, color: modeColor });
 };
 
 stateUpdate.splash = function() {
@@ -531,7 +531,7 @@ stateUpdate.splash = function() {
 
   if (input.clicked) {
     // Mode toggle (above START button)
-    if (input.clickX > 330 && input.clickX < 425 && input.clickY > 115 && input.clickY < 140) {
+    if (input.clickX > 315 && input.clickX < 415 && input.clickY > 105 && input.clickY < 128) {
       gameMode = gameMode === 'modern' ? 'classic' : 'modern';
       return;
     }
