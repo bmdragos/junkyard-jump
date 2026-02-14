@@ -114,6 +114,26 @@ function loadAssets(onProgress, onDone) {
 }
 
 // --- SOUND MANAGER ---
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playBeep(freq, duration) {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  osc.frequency.value = freq;
+  gain.gain.value = 0.15;
+  gain.gain.setTargetAtTime(0, ctx.currentTime + duration - 0.02, 0.01);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + duration);
+}
+
 let currentLoop = null;
 let currentLoopName = '';
 
@@ -1417,8 +1437,9 @@ stateRender.lightrun = function() {
 
 stateUpdate.lightrun = function() {
   game.timer++;
-  if (game.timer === 15) game.lightPhase = 1;
-  if (game.timer === 30) game.lightPhase = 2;
+  if (game.timer === 1) playBeep(330, 0.15);
+  if (game.timer === 15) { game.lightPhase = 1; playBeep(330, 0.15); }
+  if (game.timer === 30) { game.lightPhase = 2; playBeep(660, 0.3); }
   if (game.timer >= 45) {
     playSound('hotrod', true);
     setState('driving');
