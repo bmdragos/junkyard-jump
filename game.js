@@ -64,7 +64,7 @@ const IMAGE_NAMES = [
   'blower', 'blowersm', 'airconditioner', 'airconditionersm',
   'coffee', 'coffeesm', 'fan', 'fansm', 'popcorn', 'popcornsm',
 ];
-const SOUND_NAMES = ['assembly', 'bluesharp', 'crane', 'crash', 'crowd', 'fryer', 'meltdown', 'ramp', 'sewing'];
+const SOUND_NAMES = ['assembly', 'bluesharp', 'crane', 'crash', 'crowd', 'fryer', 'hotrod', 'meltdown', 'ramp', 'sewing'];
 
 // --- GLOBALS ---
 const canvas = document.getElementById('game');
@@ -73,6 +73,7 @@ const IMG = {};
 const SFX = {};
 let gameState = 'loading';
 let prevState = '';
+let gameMode = 'modern'; // 'classic' or 'modern'
 
 // Input
 const input = { spaceDown: false, clicked: false, clickX: 0, clickY: 0, mouseX: 0, mouseY: 0, keys: '', mouseDown: false, mouseDownX: 0, mouseDownY: 0 };
@@ -517,10 +518,11 @@ stateEnter.splash = function() {
 
 stateRender.splash = function() {
   ctx.drawImage(IMG.splashpage, 0, 0, GAME_W, GAME_H);
-  // Blinking "Click to Start" hint
-  if (Math.floor(Date.now() / 500) % 2 === 0) {
-    drawText('Click anywhere to start!', GAME_W / 2, GAME_H - 15, { font: FONT_SMALL, color: '#FFD700' });
-  }
+
+  // Mode toggle
+  const modeLabel = gameMode === 'modern' ? 'MODERN' : 'CLASSIC';
+  const modeColor = gameMode === 'modern' ? '#00FF88' : '#FFD700';
+  drawText('MODE: ' + modeLabel, 68, 280, { font: FONT_SMALL, color: modeColor });
 };
 
 stateUpdate.splash = function() {
@@ -528,6 +530,11 @@ stateUpdate.splash = function() {
   checkEasterEggs();
 
   if (input.clicked) {
+    // Mode toggle (bottom-left)
+    if (input.clickX < 140 && input.clickY > 265) {
+      gameMode = gameMode === 'modern' ? 'classic' : 'modern';
+      return;
+    }
     // START button (~y=140-175)
     if (input.clickX > 340 && input.clickX < 420 && input.clickY > 140 && input.clickY < 175) {
       stopAllSounds();
@@ -1456,14 +1463,23 @@ stateRender.lightrun = function() {
 
 stateUpdate.lightrun = function() {
   game.timer++;
-  if (game.timer === 1) playBeep(330, 0.15);
-  if (game.timer === 15) { game.lightPhase = 1; playBeep(330, 0.15); }
-  if (game.timer === 30) {
-    game.lightPhase = 2;
-    playBeep(660, 0.3);
-    startEngine();
-    game.lightFade = 10; // show green light briefly in driving state
-    setState('driving');
+  if (gameMode === 'modern') {
+    if (game.timer === 1) playBeep(330, 0.15);
+    if (game.timer === 15) { game.lightPhase = 1; playBeep(330, 0.15); }
+    if (game.timer === 30) {
+      game.lightPhase = 2;
+      playBeep(660, 0.3);
+      startEngine();
+      game.lightFade = 10;
+      setState('driving');
+    }
+  } else {
+    if (game.timer === 15) game.lightPhase = 1;
+    if (game.timer === 30) game.lightPhase = 2;
+    if (game.timer >= 45) {
+      playSound('hotrod', true);
+      setState('driving');
+    }
   }
 };
 
@@ -1481,7 +1497,7 @@ stateUpdate.driving = function() {
   } else {
     game.speed = Math.max(game.speed - DECEL, 0);
   }
-  updateEnginePitch(game.speed);
+  if (gameMode === 'modern') updateEnginePitch(game.speed);
   if (game.lightFade > 0) game.lightFade--;
 
   // Parallax
@@ -1669,7 +1685,7 @@ stateUpdate.jump = function() {
     game.carY = truckTop - wheelOffset; // snap wheels to truck surface
     stopAllSounds();
     playSound('crowd');
-    setState('landed');
+    setState(gameMode === 'modern' ? 'landed' : 'safe');
     return;
   }
 
