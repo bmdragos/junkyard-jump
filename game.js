@@ -64,7 +64,7 @@ const IMAGE_NAMES = [
   'blower', 'blowersm', 'airconditioner', 'airconditionersm',
   'coffee', 'coffeesm', 'fan', 'fansm', 'popcorn', 'popcornsm',
 ];
-const SOUND_NAMES = ['assembly', 'bluesharp', 'crane', 'crash', 'crowd', 'fryer', 'hotrod', 'meltdown', 'ramp', 'sewing'];
+const SOUND_NAMES = ['assembly', 'bluesharp', 'crane', 'crash', 'crowd', 'fryer', 'meltdown', 'ramp', 'sewing'];
 
 // --- GLOBALS ---
 const canvas = document.getElementById('game');
@@ -88,7 +88,7 @@ function loadAssets(onProgress, onDone) {
   function tick() {
     loaded++;
     onProgress(loaded / total);
-    if (loaded >= total) { loadEngineBuffer(); onDone(); }
+    if (loaded >= total) onDone();
   }
 
   IMAGE_NAMES.forEach(name => {
@@ -137,51 +137,21 @@ function playBeep(freq, duration) {
 let currentLoop = null;
 let currentLoopName = '';
 
-// Engine pitch shifting via Web Audio API
-let engineBuffer = null;
-let engineSource = null;
-let engineGain = null;
-
-function loadEngineBuffer() {
-  const ctx = getAudioCtx();
-  fetch('assets/sounds/hotrod.wav')
-    .then(r => r.arrayBuffer())
-    .then(buf => ctx.decodeAudioData(buf))
-    .then(decoded => { engineBuffer = decoded; })
-    .catch(() => { console.warn('Failed to load engine buffer'); });
-}
+// Synthesized engine sound (see engine-audio.js)
+let engine = null;
 
 function startEngine() {
-  stopEngine();
   const ctx = getAudioCtx();
-  if (!engineBuffer) { playSound('hotrod', true); return; }
-  engineSource = ctx.createBufferSource();
-  engineSource.buffer = engineBuffer;
-  engineSource.loop = true;
-  engineSource.playbackRate.value = 0.7;
-  engineGain = ctx.createGain();
-  engineGain.gain.value = 0.8;
-  engineSource.connect(engineGain);
-  engineGain.connect(ctx.destination);
-  engineSource.start();
+  if (!engine) engine = createEngine(ctx);
+  engine.start();
 }
 
 function updateEnginePitch(speed) {
-  if (!engineSource) return;
-  // Map speed 0-100 → playbackRate 0.7-1.5
-  engineSource.playbackRate.value = 0.7 + (speed / 100) * 0.8;
+  if (engine) engine.setSpeed(speed);
 }
 
 function stopEngine() {
-  if (engineSource) {
-    try { engineSource.stop(); } catch (e) {}
-    engineSource.disconnect();
-    engineSource = null;
-  }
-  if (engineGain) {
-    engineGain.disconnect();
-    engineGain = null;
-  }
+  if (engine) { engine.stop(); engine = null; }
 }
 
 function playSound(name, loop) {
