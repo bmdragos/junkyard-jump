@@ -356,6 +356,7 @@ function newGame() {
     scrollCity: 0,
     scrollFence: 0,
     scrollGround: 0,
+    lightFade: 0,
     // Jump
     carX: 0,
     carY: 0,
@@ -1457,9 +1458,11 @@ stateUpdate.lightrun = function() {
   game.timer++;
   if (game.timer === 1) playBeep(330, 0.15);
   if (game.timer === 15) { game.lightPhase = 1; playBeep(330, 0.15); }
-  if (game.timer === 30) { game.lightPhase = 2; playBeep(660, 0.3); }
-  if (game.timer >= 45) {
+  if (game.timer === 30) {
+    game.lightPhase = 2;
+    playBeep(660, 0.3);
     startEngine();
+    game.lightFade = 10; // show green light briefly in driving state
     setState('driving');
   }
 };
@@ -1479,6 +1482,7 @@ stateUpdate.driving = function() {
     game.speed = Math.max(game.speed - DECEL, 0);
   }
   updateEnginePitch(game.speed);
+  if (game.lightFade > 0) game.lightFade--;
 
   // Parallax
   game.scrollCity = (game.scrollCity + Math.abs(game.speed) / 15) % 850;
@@ -1549,6 +1553,17 @@ stateRender.driving = function() {
   drawText('Distance to Jump: ' + Math.max(0, Math.floor(game.distance)), GAME_W / 2, 12, { font: FONT_SMALL, color: '#FFFF00' });
   drawMoneyCounter();
 
+  // Fading traffic light overlay after green
+  if (game.lightFade > 0) {
+    ctx.save();
+    ctx.globalAlpha = game.lightFade / 10;
+    const lcx = GAME_W / 2;
+    const lcy = GAME_H / 2 - 40;
+    ctx.drawImage(IMG.light, lcx - 29, lcy);
+    ctx.drawImage(IMG.lights3, lcx + 5, lcy + 13);
+    ctx.restore();
+  }
+
   // Spacebar hint
   if (game.speed === 0) {
     drawText('HOLD SPACEBAR', GAME_W / 2, GAME_H - 20, { color: '#FFFF00', font: FONT_SMALL });
@@ -1589,10 +1604,42 @@ function getJumpLayout() {
   return { piles, landing };
 }
 
+// Compute the visual wheel bottom offset from carY for the current car
+function getWheelBottomOffset() {
+  const chassisName = game.selectedPieces[0];
+  const wheelsName = game.selectedPieces[1];
+  const offsets = PARTS.chassis[chassisName];
+  const wheelImg = IMG[wheelsName + 'sm'];
+  if (!offsets || !wheelImg) return 35; // fallback
+  const scale = 0.45;
+  const maxWheelY = Math.max(offsets.wheelOff[0][1], offsets.wheelOff[1][1]);
+  const wh = wheelImg.naturalHeight || wheelImg.height;
+  return maxWheelY * scale + wh / 2;
+}
+
 stateUpdate.jump = function() {
   game.timer++;
 
-  // Collision check BEFORE movement (matches original Lingo ordering)
+  // Physics FIRST — so collision checks see the updated position
+  if (game.goingUp) {
+    if (game.vSpeed <= 0) {
+      game.goingUp = false;
+      game.vSpeed += GRAVITY;
+      game.carY += game.vSpeed;
+    } else {
+      game.vSpeed -= GRAVITY;
+      game.carY -= game.vSpeed;
+    }
+  } else {
+    game.vSpeed += GRAVITY;
+    game.carY += game.vSpeed;
+  }
+
+  // Horizontal movement
+  game.carX += game.jumpHSpeed;
+  game.wheelRotation += game.jumpHSpeed * 0.3;
+
+  // Collision checks AFTER movement — no stutter
   const layout = getJumpLayout();
   const carBounds = {
     x: game.carX - 30,
@@ -1612,41 +1659,27 @@ stateUpdate.jump = function() {
     }
   }
 
-  // Check landing zone
-  if (!game.goingUp && rectsOverlap(carBounds, layout.landing)) {
+  // Check landing zone — snap wheel bottoms to truck surface
+  const truckTop = layout.landing.y;
+  const wheelOffset = getWheelBottomOffset();
+  const wheelBottom = game.carY + wheelOffset;
+  const inLandingX = game.carX > layout.landing.x && game.carX < layout.landing.x + layout.landing.w;
+
+  if (!game.goingUp && inLandingX && wheelBottom >= truckTop) {
+    game.carY = truckTop - wheelOffset; // snap wheels to truck surface
     stopAllSounds();
     playSound('crowd');
-    setState('safe');
+    setState('landed');
     return;
   }
 
-  // Missed - fell below ground
+  // Missed - fell below ground (past the truck)
   if (game.carY > game.groundY + 20) {
     stopAllSounds();
     playSound('crash');
     setState('missedramp');
     return;
   }
-
-  // Physics — match original Lingo phase transition:
-  // when vSpeed hits 0, switch to falling on the SAME frame
-  if (game.goingUp) {
-    if (game.vSpeed <= 0) {
-      game.goingUp = false;
-      game.vSpeed += GRAVITY;
-      game.carY += game.vSpeed;
-    } else {
-      game.vSpeed -= GRAVITY;
-      game.carY -= game.vSpeed;
-    }
-  } else {
-    game.vSpeed += GRAVITY;
-    game.carY += game.vSpeed;
-  }
-
-  // Horizontal movement
-  game.carX += game.jumpHSpeed;
-  game.wheelRotation += game.jumpHSpeed * 0.3;
 };
 
 function rectsOverlap(a, b) {
@@ -1690,19 +1723,94 @@ stateRender.jump = function() {
     ctx.drawImage(IMG.trashpile, pile.x, pile.y);
   });
 
+  // Draw car behind truck if falling past it, on top if above it
+  const carAboveTruck = (game.carY + 15) <= layout.landing.y;
+  if (!carAboveTruck) {
+    drawAssembledCar(game.carX, game.carY, true);
+    ctx.drawImage(IMG.dog, game.carX - 15, game.carY - 40);
+  }
+
   // Landing truck
   ctx.drawImage(IMG.bigtruck, layout.landing.x, layout.landing.y);
 
-  // Car
-  drawAssembledCar(game.carX, game.carY, true);
-  // Dog
-  ctx.drawImage(IMG.dog, game.carX - 15, game.carY - 40);
+  // Car on top of truck when above the surface
+  if (carAboveTruck) {
+    drawAssembledCar(game.carX, game.carY, true);
+    ctx.drawImage(IMG.dog, game.carX - 15, game.carY - 40);
+  }
 
   ctx.restore();
 
   // HUD
   drawMoneyCounter();
   drawText('JUMP!', GAME_W / 2, 15, { color: '#FFD700', font: 'bold 16px "Trebuchet MS", sans-serif' });
+};
+
+// ============================================================
+// STATE: LANDED (car sliding to stop on truck)
+// ============================================================
+stateEnter.landed = function() {
+  game.landTimer = 0;
+};
+
+stateUpdate.landed = function() {
+  game.landTimer++;
+  // Decelerate on truck surface
+  game.jumpHSpeed = Math.max(game.jumpHSpeed * 0.8, 0.2);
+  game.carX += game.jumpHSpeed;
+  game.wheelRotation += game.jumpHSpeed * 0.3;
+
+  if (game.landTimer >= 20) {
+    setState('safe');
+  }
+};
+
+stateRender.landed = function() {
+  // Same scene as jump
+  const grad = ctx.createLinearGradient(0, 0, 0, 150);
+  grad.addColorStop(0, '#D4600A');
+  grad.addColorStop(0.7, '#C41A04');
+  grad.addColorStop(1, '#8B0000');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, GAME_W, GAME_H);
+
+  ctx.fillStyle = '#5C3D1E';
+  ctx.fillRect(0, game.groundY, GAME_W, GAME_H - game.groundY);
+
+  const cameraX = Math.max(0, game.carX - 80);
+  ctx.save();
+  ctx.translate(-cameraX, 0);
+
+  // Ramp
+  ctx.fillStyle = '#8B6914';
+  ctx.beginPath();
+  ctx.moveTo(20, game.groundY);
+  ctx.lineTo(80, game.groundY);
+  ctx.lineTo(80, game.groundY - 50);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#6B4E12';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Trash piles
+  const layout = getJumpLayout();
+  layout.piles.forEach(pile => {
+    ctx.drawImage(IMG.trashpile, pile.x, pile.y);
+  });
+
+  // Landing truck
+  ctx.drawImage(IMG.bigtruck, layout.landing.x, layout.landing.y);
+
+  // Car on top of truck
+  drawAssembledCar(game.carX, game.carY, true);
+  ctx.drawImage(IMG.dog, game.carX - 15, game.carY - 40);
+
+  ctx.restore();
+
+  // HUD
+  drawMoneyCounter();
+  drawText('SAFE LANDING!', GAME_W / 2, 15, { color: '#00FF00', font: 'bold 16px "Trebuchet MS", sans-serif' });
 };
 
 // ============================================================
