@@ -472,15 +472,15 @@ stateUpdate.splash = function() {
   checkEasterEggs();
 
   if (input.clicked) {
-    // START button (right side, lower button ~y=130-185)
-    if (input.clickX > 360 && input.clickX < 425 && input.clickY > 130 && input.clickY < 185) {
+    // START button (~y=140-175)
+    if (input.clickX > 340 && input.clickX < 420 && input.clickY > 140 && input.clickY < 175) {
       stopAllSounds();
       newGame();
       setState('chassis');
       return;
     }
-    // HOW TO button (right side, upper button ~y=75-130)
-    if (input.clickX > 360 && input.clickX < 425 && input.clickY > 75 && input.clickY < 130) {
+    // HOW TO button (~y=205-245)
+    if (input.clickX > 340 && input.clickX < 420 && input.clickY > 205 && input.clickY < 245) {
       setState('help');
       return;
     }
