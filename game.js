@@ -143,7 +143,7 @@ let engine = null;
 
 function startEngine() {
   const ctx = getAudioCtx();
-  if (!engine) engine = createEngine(ctx);
+  if (!engine) engine = createEngine(ctx, game.selectedPieces[2]);
   engine.start();
 }
 
@@ -1424,7 +1424,7 @@ stateEnter.lightrun = function() {
   game.speed = 0;
   game.distance = 5000;
   game.maxedFrames = 0;
-  game.tachAngle = 0;
+  game.tachAngle = gameMode === 'modern' ? 27 : 0;
   game.prevSpeed = 0;
   game.wheelRotation = 0;
   game.scrollCity = 0;
@@ -1492,12 +1492,28 @@ stateEnter.driving = function() {
 
 stateUpdate.driving = function() {
   // Acceleration
-  if (input.spaceDown) {
-    game.speed = Math.min(game.speed + ACCEL, game.maxSpeed);
+  if (gameMode === 'modern') {
+    // Modern: red zone boost. Once at maxSpeed, holding space pushes
+    // 5% past max but the blown engine timer starts ticking.
+    const boostMax = game.maxSpeed * 1.05;
+    if (input.spaceDown) {
+      if (game.speed >= game.maxSpeed) {
+        // At max — slower accel into boost zone, risk blowing engine
+        game.speed = Math.min(game.speed + ACCEL * 0.4, boostMax);
+      } else {
+        game.speed = Math.min(game.speed + ACCEL, game.maxSpeed);
+      }
+    } else {
+      game.speed = Math.max(game.speed - DECEL, 0);
+    }
+    updateEnginePitch(game.speed);
   } else {
-    game.speed = Math.max(game.speed - DECEL, 0);
+    if (input.spaceDown) {
+      game.speed = Math.min(game.speed + ACCEL, game.maxSpeed);
+    } else {
+      game.speed = Math.max(game.speed - DECEL, 0);
+    }
   }
-  if (gameMode === 'modern') updateEnginePitch(game.speed);
   if (game.lightFade > 0) game.lightFade--;
 
   // Parallax
@@ -1511,12 +1527,28 @@ stateUpdate.driving = function() {
   // Distance
   game.distance -= game.speed;
 
-  // Tachometer - matches original Lingo: needle rises when accelerating/holding,
-  // drops when decelerating (even while still moving)
-  if (game.speed >= game.prevSpeed) {
-    game.tachAngle = Math.min(game.tachAngle + Math.round(game.speed / 3), 270);
+  // Tachometer
+  if (gameMode === 'modern') {
+    // Tach tracks speed ratio. At maxSpeed the tach is at the redline.
+    // Beyond maxSpeed (boost zone) it climbs toward 270 (blown engine).
+    const ratio = game.speed / game.maxSpeed; // 0-1, can exceed 1 in boost
+    const targetTach = 27 + Math.min(ratio, 1) * (216 - 27); // idle→redline
+    if (game.speed >= game.maxSpeed) {
+      // In boost zone: tach climbs from redline (216) toward max (270)
+      const boostRatio = (game.speed - game.maxSpeed) / (game.maxSpeed * 0.05);
+      const boostTarget = 216 + boostRatio * (270 - 216);
+      game.tachAngle += (boostTarget - game.tachAngle) * 0.25;
+    } else {
+      game.tachAngle += (targetTach - game.tachAngle) * 0.3;
+    }
+    game.tachAngle = Math.max(game.tachAngle, 27);
   } else {
-    game.tachAngle = Math.max(game.tachAngle - 15, 0);
+    // Classic: matches original Lingo accumulator behavior
+    if (game.speed >= game.prevSpeed) {
+      game.tachAngle = Math.min(game.tachAngle + Math.round(game.speed / 3), 270);
+    } else {
+      game.tachAngle = Math.max(game.tachAngle - 15, 0);
+    }
   }
   game.prevSpeed = game.speed;
 
@@ -1557,13 +1589,18 @@ stateRender.driving = function() {
   ctx.drawImage(IMG.dog, 85, game.groundY - 50);
 
   // Gauges
-  const gx = GAME_W - 170;
-  const gy = GAME_H - 90;
-  ctx.drawImage(IMG.tachometer, gx, gy);
-  ctx.drawImage(IMG.speedometer, gx + 85, gy);
-  const tachJitter = game.tachAngle < 5 ? (Math.random() - 0.5) * 6 : 0;
-  drawNeedle(gx + 40, gy + 40, game.tachAngle + 330 + tachJitter);
-  drawNeedle(gx + 125, gy + 40, game.speed * 3 + 270);
+  const tachIdleThreshold = gameMode === 'modern' ? 32 : 5;
+  const tachJitter = game.tachAngle < tachIdleThreshold ? (Math.random() - 0.5) * 6 : 0;
+  if (gameMode === 'modern') {
+    drawModernGauges(ctx, game.speed, game.tachAngle, tachJitter);
+  } else {
+    const gx = GAME_W - 170;
+    const gy = GAME_H - 90;
+    ctx.drawImage(IMG.tachometer, gx, gy);
+    ctx.drawImage(IMG.speedometer, gx + 85, gy);
+    drawNeedle(gx + 40, gy + 40, game.tachAngle + 330 + tachJitter);
+    drawNeedle(gx + 125, gy + 40, game.speed * 3 + 270);
+  }
 
   // Distance
   drawText('Distance to Jump: ' + Math.max(0, Math.floor(game.distance)), GAME_W / 2, 12, { font: FONT_SMALL, color: '#FFFF00' });
