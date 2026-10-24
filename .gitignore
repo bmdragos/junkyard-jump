@@ -8,3 +8,7 @@ decompiled/
 reference/
 assets3/
 fix_sounds.py
+.trace/
+
+.DS_Store
+__pycache__/

@@ -1,0 +1,429 @@
+{
+ "5": {
+  "name": "converyortop",
+  "w": 425,
+  "h": 21,
+  "regX": 0,
+  "regY": 10
+ },
+ "4": {
+  "name": "converyorwheel",
+  "w": 25,
+  "h": 25,
+  "regX": 13,
+  "regY": 12
+ },
+ "1": {
+  "name": "background",
+  "w": 425,
+  "h": 290,
+  "regX": 212,
+  "regY": 145
+ },
+ "7": {
+  "name": "fryer",
+  "w": 254,
+  "h": 225,
+  "regX": 126,
+  "regY": 112
+ },
+ "6": {
+  "name": "terminal",
+  "w": 125,
+  "h": 158,
+  "regX": 62,
+  "regY": 78
+ },
+ "9": {
+  "name": "hand1",
+  "w": 50,
+  "h": 34,
+  "regX": 50,
+  "regY": 7
+ },
+ "3": {
+  "name": "crane2",
+  "w": 38,
+  "h": 217,
+  "regX": 18,
+  "regY": 216
+ },
+ "22": {
+  "name": "wheel4",
+  "w": 81,
+  "h": 81,
+  "regX": 41,
+  "regY": 79
+ },
+ "13": {
+  "name": "bathtub",
+  "w": 222,
+  "h": 141,
+  "regX": 114,
+  "regY": 140
+ },
+ "2": {
+  "name": "crane1",
+  "w": 66,
+  "h": 214,
+  "regX": 33,
+  "regY": 210
+ },
+ "21": {
+  "name": "wheel3",
+  "w": 69,
+  "h": 69,
+  "regX": 35,
+  "regY": 66
+ },
+ "8": {
+  "name": "dog",
+  "w": 111,
+  "h": 118,
+  "regX": 55,
+  "regY": 58
+ },
+ "10": {
+  "name": "hand2",
+  "w": 65,
+  "h": 26,
+  "regX": 54,
+  "regY": 5
+ },
+ "11": {
+  "name": "hand3",
+  "w": 66,
+  "h": 38,
+  "regX": 66,
+  "regY": 23
+ },
+ "24": {
+  "name": "airconditioner",
+  "w": 95,
+  "h": 95,
+  "regX": 50,
+  "regY": 89
+ },
+ "14": {
+  "name": "cart",
+  "w": 158,
+  "h": 114,
+  "regX": 82,
+  "regY": 109
+ },
+ "17": {
+  "name": "washer",
+  "w": 112,
+  "h": 120,
+  "regX": 54,
+  "regY": 118
+ },
+ "20": {
+  "name": "wheel2",
+  "w": 63,
+  "h": 64,
+  "regX": 32,
+  "regY": 60
+ },
+ "27": {
+  "name": "popcorn",
+  "w": 59,
+  "h": 76,
+  "regX": 32,
+  "regY": 74
+ },
+ "25": {
+  "name": "coffee",
+  "w": 59,
+  "h": 75,
+  "regX": 34,
+  "regY": 74
+ },
+ "18": {
+  "name": "wagon",
+  "w": 140,
+  "h": 89,
+  "regX": 69,
+  "regY": 86
+ },
+ "15": {
+  "name": "chair",
+  "w": 189,
+  "h": 154,
+  "regX": 85,
+  "regY": 148
+ },
+ "26": {
+  "name": "fan",
+  "w": 74,
+  "h": 180,
+  "regX": 38,
+  "regY": 172
+ },
+ "19": {
+  "name": "wheel1",
+  "w": 52,
+  "h": 52,
+  "regX": 25,
+  "regY": 51
+ },
+ "23": {
+  "name": "blower",
+  "w": 114,
+  "h": 62,
+  "regX": 57,
+  "regY": 57
+ },
+ "16": {
+  "name": "toilet",
+  "w": 125,
+  "h": 103,
+  "regX": 65,
+  "regY": 102
+ },
+ "80": {
+  "name": "popcornsm",
+  "w": 25,
+  "h": 32,
+  "regX": 23,
+  "regY": 17
+ },
+ "79": {
+  "name": "coffeesm",
+  "w": 24,
+  "h": 30,
+  "regX": 22,
+  "regY": 15
+ },
+ "78": {
+  "name": "fansm",
+  "w": 24,
+  "h": 58,
+  "regX": 18,
+  "regY": 20
+ },
+ "77": {
+  "name": "blowersm",
+  "w": 38,
+  "h": 20,
+  "regX": 31,
+  "regY": 15
+ },
+ "76": {
+  "name": "airconditionersm",
+  "w": 28,
+  "h": 29,
+  "regX": 27,
+  "regY": 17
+ },
+ "75": {
+  "name": "wheel4sm",
+  "w": 31,
+  "h": 31,
+  "regX": 16,
+  "regY": 15
+ },
+ "74": {
+  "name": "wheel3sm",
+  "w": 27,
+  "h": 26,
+  "regX": 13,
+  "regY": 13
+ },
+ "73": {
+  "name": "wheel2sm",
+  "w": 24,
+  "h": 24,
+  "regX": 12,
+  "regY": 12
+ },
+ "72": {
+  "name": "wheel1sm",
+  "w": 20,
+  "h": 20,
+  "regX": 10,
+  "regY": 10
+ },
+ "71": {
+  "name": "wagonsm",
+  "w": 60,
+  "h": 40,
+  "regX": 30,
+  "regY": 37
+ },
+ "70": {
+  "name": "bathtubsm",
+  "w": 103,
+  "h": 65,
+  "regX": 52,
+  "regY": 62
+ },
+ "69": {
+  "name": "washersm",
+  "w": 51,
+  "h": 54,
+  "regX": 23,
+  "regY": 52
+ },
+ "68": {
+  "name": "toiletsm",
+  "w": 54,
+  "h": 45,
+  "regX": 26,
+  "regY": 42
+ },
+ "67": {
+  "name": "cartsm",
+  "w": 76,
+  "h": 54,
+  "regX": 38,
+  "regY": 53
+ },
+ "66": {
+  "name": "chairsm",
+  "w": 76,
+  "h": 62,
+  "regX": 38,
+  "regY": 59
+ },
+ "62": {
+  "name": "trucklt",
+  "w": 164,
+  "h": 65,
+  "regX": 0,
+  "regY": 65
+ },
+ "61": {
+  "name": "needle",
+  "w": 9,
+  "h": 32,
+  "regX": 4,
+  "regY": 3
+ },
+ "60": {
+  "name": "lights3",
+  "w": 20,
+  "h": 65,
+  "regX": 10,
+  "regY": 8
+ },
+ "59": {
+  "name": "lights2",
+  "w": 20,
+  "h": 40,
+  "regX": 10,
+  "regY": 8
+ },
+ "58": {
+  "name": "lights1",
+  "w": 20,
+  "h": 17,
+  "regX": 10,
+  "regY": 8
+ },
+ "57": {
+  "name": "light",
+  "w": 58,
+  "h": 87,
+  "regX": 29,
+  "regY": 43
+ },
+ "56": {
+  "name": "tachometer",
+  "w": 81,
+  "h": 81,
+  "regX": 40,
+  "regY": 40
+ },
+ "55": {
+  "name": "speedometer",
+  "w": 81,
+  "h": 81,
+  "regX": 40,
+  "regY": 40
+ },
+ "54": {
+  "name": "trashpile",
+  "w": 83,
+  "h": 85,
+  "regX": 41,
+  "regY": 42
+ },
+ "53": {
+  "name": "dog",
+  "w": 41,
+  "h": 45,
+  "regX": 20,
+  "regY": 22
+ },
+ "52": {
+  "name": "ground",
+  "w": 850,
+  "h": 62,
+  "regX": 0,
+  "regY": 62
+ },
+ "51": {
+  "name": "fence",
+  "w": 850,
+  "h": 113,
+  "regX": 0,
+  "regY": 113
+ },
+ "50": {
+  "name": "city",
+  "w": 850,
+  "h": 241,
+  "regX": 0,
+  "regY": 241
+ },
+ "49": {
+  "name": "background",
+  "w": 425,
+  "h": 290,
+  "regX": 212,
+  "regY": 145
+ },
+ "63": {
+  "name": "bigtruck",
+  "w": 416,
+  "h": 69,
+  "regX": 49,
+  "regY": 69
+ },
+ "30": {
+  "name": "winscreen",
+  "w": 425,
+  "h": 290,
+  "regX": 212,
+  "regY": 145
+ },
+ "29": {
+  "name": "textframe",
+  "w": 361,
+  "h": 225,
+  "regX": 180,
+  "regY": 112
+ },
+ "28": {
+  "name": "button",
+  "w": 127,
+  "h": 35,
+  "regX": 63,
+  "regY": 17
+ },
+ "36": {
+  "name": "crashscene",
+  "w": 100,
+  "h": 41,
+  "regX": 49,
+  "regY": 20
+ },
+ "43": {
+  "name": "splashpage",
+  "w": 425,
+  "h": 290,
+  "regX": 212,
+  "regY": 145
+ }
+}
