@@ -391,7 +391,11 @@ const CONVEYOR = {
   wheels: { type: 'wheels', slot: 1, list: WHEEL_LIST, title: 'TIRE SELECTION', prompt: 'Select tires' },
   engine: { type: 'engines', slot: 2, list: ENGINE_LIST, title: 'ENGINE SELECTION', prompt: 'Select an engine' },
 };
-const ITEM_STOP = 278, ITEM_START = 639, ITEM_SPACING = 450, BELT_SPEED = 15; // item script 105
+// item script 105: two item sprites (12, 13) take turns; each moves 15px a frame, stops on the
+// first frame it is already at or past x 278 (so it stops at 270 or 264, not exactly 278), and
+// after leaving past x -225 wraps to 639 carrying the next part.
+const ITEM_STOP = 278, ITEM_WRAP = 639, ITEM_LEFT = -225, BELT_SPEED = 15;
+const CONVEYOR_FRAME = { chassis: 8, wheels: 15, engine: 23 };
 
 function enterConveyor() {
   const cfg = CONVEYOR[gameState];
@@ -403,11 +407,17 @@ function enterConveyor() {
   });
   game.conveyor = gameState;
   game.index = 0;
-  game.itemX = ITEM_START;
+  const f = CONVEYOR_FRAME[gameState];
+  // the two item sprites start where the Score puts them (675 and 1125); y is per part type
+  game.items = [12, 13].map((ch, i) => ({ ch, x: scoreRec(f, ch)[2], y: scoreRec(f, ch)[3], idx: i % game.list.length, stopped: false }));
+  game.nextIdx = 2 % game.list.length;
   game.moving = true;
-  game.leaving = false;     // no part leaving the belt until NEXT
-  game.belt = 0;
-  game.wheelRot = 0;
+  // belt sprites 6-7, wheel sprites 3-5 and the hand keep their state through a whole build
+  // (their Score span, frames 1-170, lasts until the run); a new build starts them afresh
+  if (!game.belt) {
+    // the belt and its wheels already ran through frames 2-5 before the parts appear on frame 6
+    game.belt = [0 - 4 * BELT_SPEED, 429 - 4 * BELT_SPEED]; game.wheelRot = -4 * BELT_SPEED; game.handFrame = 0;
+  }
   game.selectionText = cfg.title;
   game.itemText = cfg.prompt;
   if (!game.upgrading && gameState === 'chassis') { game.pieces = []; game.totalCost = 0; }
@@ -426,22 +436,32 @@ stateUpdate.chassis = stateUpdate.wheels = stateUpdate.engine = function () {
   checkEasterEggs();
   if (!CONVEYOR[gameState]) return;
   if (game.moving) {
-    game.itemX -= BELT_SPEED;
-    game.belt = (game.belt + BELT_SPEED) % 450;
+    game.belt = game.belt.map(x => (x <= -425 ? 425 : x - BELT_SPEED)); // wrap at -425 to 425
     game.wheelRot -= BELT_SPEED;
-    if (game.itemX <= ITEM_STOP) {
-      game.itemX = ITEM_STOP;
-      game.moving = false;
-      game.itemText = itemInfo().text;
-      moveDog();
+    for (const it of game.items) {             // sprite 12, then 13, as the original's exitFrame order
+      if (!it.stopped) {
+        if (it.x <= ITEM_STOP) {               // stop, and stop everything (sendAllSprites #stop)
+          it.stopped = true;
+          game.moving = false;
+          game.index = it.idx;
+          game.itemText = itemInfo().text;
+          moveDog();
+          return;
+        }
+        it.x -= BELT_SPEED;
+      } else if (it.x > ITEM_LEFT) {
+        it.x -= BELT_SPEED;
+      } else {                                 // off the left: come round again with the next part
+        it.x = ITEM_WRAP;
+        it.idx = game.nextIdx;
+        game.nextIdx = (game.nextIdx + 1) % game.list.length;
+        it.stopped = false;
+      }
     }
     return;
   }
   if (clicked(8, [26, 28])) {                    // NEXT
-    game.index = (game.index + 1) % game.list.length;
-    game.itemX = ITEM_STOP + ITEM_SPACING;
     game.moving = true;
-    game.leaving = true;
     game.itemText = CONVEYOR[gameState].prompt;
     moveDog();
     playSound('assembly');
@@ -476,28 +496,20 @@ function parkedParts(skipSlot) {
 }
 
 function drawConveyorScene(f, ov = {}) {
-  const belt = -game.belt;
   drawScoreFrame(f, Object.assign({
     12: { hide: true }, 13: { hide: true },
     3: { rot: game.wheelRot }, 4: { rot: game.wheelRot }, 5: { rot: game.wheelRot },
-    6: { loc: [belt, 218] }, 7: { loc: [belt + 450, 218] },
+    6: { loc: [game.belt[0], 218] }, 7: { loc: [game.belt[1], 218] },
     17: { member: HANDS[game.handFrame] },
     21: { text: money() }, 24: { text: game.selectionText }, 25: { text: game.itemText },
   }, ov));
 }
-const CONVEYOR_FRAME = { chassis: 8, wheels: 15, engine: 23 };
+// the parts ride item sprites 12 and 13, beneath the terminal (16), the hand (17) and Willy (18)
 stateRender.chassis = stateRender.wheels = stateRender.engine = function () {
   const hide = game.moving ? { hide: true } : {};
-  // the part on the belt rides item sprite 12 and the one leaving after NEXT (450px ahead)
-  // sprite 13, so both pass behind the terminal (16), Willy's hand (17) and Willy (18)
-  const f = CONVEYOR_FRAME[gameState];
-  const name = game.list[game.index], prev = game.list[(game.index + game.list.length - 1) % game.list.length];
-  const prevX = game.itemX - ITEM_SPACING;
-  const items = {
-    12: { member: name, loc: [game.itemX, 216], rec: scoreRec(f, 12) },
-    13: game.leaving && prevX > -225 ? { member: prev, loc: [prevX, 216], rec: scoreRec(f, 13) } : { hide: true },
-  };
-  drawConveyorScene(f, Object.assign(parkedParts(SLOT_OF[gameState]), items, { 26: hide, 27: hide, 28: hide, 29: hide }));
+  const items = {};
+  for (const it of game.items) items[it.ch] = { member: game.list[it.idx], loc: [it.x, it.y], rec: scoreRec(CONVEYOR_FRAME[gameState], it.ch) };
+  drawConveyorScene(CONVEYOR_FRAME[gameState], Object.assign(parkedParts(SLOT_OF[gameState]), items, { 26: hide, 27: hide, 28: hide, 29: hide }));
 };
 
 // crane pickup: Score frames 45-102, played at double speed
@@ -555,9 +567,11 @@ stateUpdate.assemble = function () {
 };
 stateRender.assemble = function () {
   const f = Math.min(game.f, 169);
-  const ov = {};
+  // The chosen parts stay parked on the belt (puppeted sprites 8-11) while the fryer comes down;
+  // frame 134's assembly script releases them and assembleCar lays out the big car.
+  const ov = f < 134 ? parkedParts(-1) : {};
   const base = scoreRec(f, 9);
-  if (base) {                                    // assembleCar (movie script 103)
+  if (base && f >= 134) {                        // assembleCar (movie script 103)
     const [chasis, wheels, engine] = game.pieces;
     const [w1, w2, en] = ASSEMBLY[chasis];
     const [bx, by] = [base[2], base[3]];
@@ -575,6 +589,7 @@ stateRender.assemble = function () {
 // ============================================================
 stateEnter.run = function () {
   stopAllSounds();
+  game.belt = null;         // the conveyor's sprites start over at the next build
   if (game.newLevelOnRun) { game.newLevelOnRun = false; if (!newLevel()) return; }
   game.repairCost = random(5) + 5;               // prepareForJump script 142
   game.layout = MJ.carLayout(meta, game.pieces[0], game.pieces[1], game.pieces[2]);
