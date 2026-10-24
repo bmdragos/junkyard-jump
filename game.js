@@ -405,6 +405,7 @@ function enterConveyor() {
   game.index = 0;
   game.itemX = ITEM_START;
   game.moving = true;
+  game.leaving = false;     // no part leaving the belt until NEXT
   game.belt = 0;
   game.wheelRot = 0;
   game.selectionText = cfg.title;
@@ -440,6 +441,7 @@ stateUpdate.chassis = stateUpdate.wheels = stateUpdate.engine = function () {
     game.index = (game.index + 1) % game.list.length;
     game.itemX = ITEM_STOP + ITEM_SPACING;
     game.moving = true;
+    game.leaving = true;
     game.itemText = CONVEYOR[gameState].prompt;
     moveDog();
     playSound('assembly');
@@ -476,9 +478,9 @@ function parkedParts(skipSlot) {
 function drawConveyorScene(f, ov = {}) {
   const belt = -game.belt;
   drawScoreFrame(f, Object.assign({
+    12: { hide: true }, 13: { hide: true },
     3: { rot: game.wheelRot }, 4: { rot: game.wheelRot }, 5: { rot: game.wheelRot },
     6: { loc: [belt, 218] }, 7: { loc: [belt + 450, 218] },
-    12: { hide: true }, 13: { hide: true },
     17: { member: HANDS[game.handFrame] },
     21: { text: money() }, 24: { text: game.selectionText }, 25: { text: game.itemText },
   }, ov));
@@ -486,11 +488,16 @@ function drawConveyorScene(f, ov = {}) {
 const CONVEYOR_FRAME = { chassis: 8, wheels: 15, engine: 23 };
 stateRender.chassis = stateRender.wheels = stateRender.engine = function () {
   const hide = game.moving ? { hide: true } : {};
-  drawConveyorScene(CONVEYOR_FRAME[gameState], Object.assign(parkedParts(SLOT_OF[gameState]), { 26: hide, 27: hide, 28: hide, 29: hide }));
-  // the item on the belt, and the previous one leaving 450px ahead of it
+  // the part on the belt rides item sprite 12 and the one leaving after NEXT (450px ahead)
+  // sprite 13, so both pass behind the terminal (16), Willy's hand (17) and Willy (18)
+  const f = CONVEYOR_FRAME[gameState];
   const name = game.list[game.index], prev = game.list[(game.index + game.list.length - 1) % game.list.length];
-  drawMember(name, game.itemX, 216);
-  if (game.moving && game.itemX - ITEM_SPACING > -225 && game.itemX < ITEM_START) drawMember(prev, game.itemX - ITEM_SPACING, 216);
+  const prevX = game.itemX - ITEM_SPACING;
+  const items = {
+    12: { member: name, loc: [game.itemX, 216], rec: scoreRec(f, 12) },
+    13: game.leaving && prevX > -225 ? { member: prev, loc: [prevX, 216], rec: scoreRec(f, 13) } : { hide: true },
+  };
+  drawConveyorScene(f, Object.assign(parkedParts(SLOT_OF[gameState]), items, { 26: hide, 27: hide, 28: hide, 29: hide }));
 };
 
 // crane pickup: Score frames 45-102, played at double speed
