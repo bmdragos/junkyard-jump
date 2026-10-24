@@ -64,6 +64,28 @@ Too slow hits the piles, too fast overshoots the carrier. (Classic's windows, fo
 23–33 up to 64–72.) Tune with `node tools/modern_sweep.js [chassis wheels engine] GRAVITY=1.7
 PILE_GAP=150 CARRIER_GAP=40`.
 
+## Engine sound
+
+`engine-audio.js` synthesizes one sound per engine part: the hair blower is wind with a motor
+whine, the air conditioner a square-wave compressor drone, the coffee maker bubbling over a mains
+hum with steam at the top, the ceiling fan a hum with blade whoosh, the popcorn popper pops over a
+buzzing element.
+
+- **Revs follow the tach** (idle 27 to full boost 270 maps to 0..1), so the redline scream starts
+  as the needle nears the red zone on every car. (It used to follow mph against a fixed 100, so a
+  cheap car pinned at its redline only reached 40% and never screamed.)
+- **Throttle:** on the gas the engine is about 5 dB louder, brighter and harsher; coasting, it goes
+  dull.
+- **No audible loops:** bubbles and pops are generated a two-second chunk at a time, denser at
+  higher revs, and each noise source loops its own random 5-8 s buffer. (Everything used to loop the
+  same two seconds.)
+- **Audible range:** the coffee maker's hum and the air conditioner's drone were moved up out of the
+  subsonic range small speakers can't play; a 35 Hz high-pass trims what's left.
+- **Matched loudness:** `tools/engine_loudness.js` renders each engine offline and measures it
+  K-weighted (as LUFS); the volumes put all five within 0.2 dB. The air conditioner had been about
+  11 dB louder than the rest.
+- **Blown engine:** the pitch sags, the engine misfires and backfires, and dies in about 1.5 s.
+
 ## How it plays differently from the original
 
 | | Original (Classic) | Modern |
@@ -71,7 +93,7 @@ PILE_GAP=150 CARRIER_GAP=40`.
 | Jump | Cut to a jump frame; fixed upward speed 15, car stays at x 76 | Continuous run up the real ramp; launch height and speed follow your speed |
 | Motion | 15 fps | 60 Hz simulation and drawing (menus keep 15 fps) |
 | Picture | 425x290, pixelated | Display resolution (up to 4x), anti-aliased, 4x upscaled art |
-| Engine | `sewing` loop, tach at a fixed rise per frame | Synthesized per-engine sound; tach tracks speed / rating, with a 5% redline boost that can blow the engine |
+| Engine | `sewing` loop, tach at a fixed rise per frame | Synthesized per-engine sound (below); tach tracks speed / rating, with a 5% redline boost that can blow the engine |
 | Lights | Gas works during the lights | Gas from green |
 | Crash, blown engine | REPAIR only | RETRY or UPGRADE (after paying the repair) |
 | Missed landing | REPAIR, counts as the jump made | NEXT JUMP or UPGRADE after the repair; prize paid, as in the original |
@@ -88,7 +110,7 @@ PILE_GAP=150 CARRIER_GAP=40`.
 | `game.js` | Modern states, Score-frame drawing, the run scene and HUD |
 | `modern-jump.js` | The run simulation (no DOM; runs in Node for the sweep) |
 | `modern-gauges.js` | Vector tachometer and speedometer |
-| `engine-audio.js` | Synthesized engine sound per engine part |
+| `engine-audio.js`, `tools/engine_loudness.js` | Synthesized engine sound per engine part; loudness matching |
 | `kids-font.js` | The original Kids font, shared with Classic |
 | `assets/modern/hd/`, `tools/upscale/` | 4x art and the Real-ESRGAN pipeline that makes it |
 | `tools/make_modern_geometry.py` | Ramp, carrier and pile geometry from the bitmaps |

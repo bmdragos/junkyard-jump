@@ -640,14 +640,15 @@ stateUpdate.run = function (dt) {
     game.maxed = game.tach >= 266 ? game.maxed + dt : 0;
     if (game.maxed >= BLOWN_ENGINE_FRAMES) {
       game.outcome = 'blown';
-      stopEngine();
+      if (engine) { engine.blow(); engine = null; }   // sputters, backfires and dies
       playSound('meltdown');
       return;
     }
   } else if (sim.phase !== 'drive') {
     game.tach = Math.max(27, game.tach - 4 * dt);   // off the throttle in the air
   }
-  if (engine) engine.setSpeed(sim.phase === 'deck' ? sim.speed : sim.phase === 'drive' ? game.speed : game.speed * 0.8);
+  // engine sound follows the tach (idle 27 .. full boost 270), loaded while the gas is held
+  if (engine) engine.setRpm((game.tach - 27) / (270 - 27), sim.phase === 'drive' && gasDown() ? 1 : 0);
 
   if (sim.phase === 'drive') sim.speed = game.speed;
   sim.step(dt);
