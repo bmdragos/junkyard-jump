@@ -13,9 +13,24 @@ Build a vehicle from junkyard scrap — pick a chassis (bathtub, shopping cart, 
 - **Original engine**: Macromedia Director 7.0, Shockwave `.dcr` plugin
 - **This rebuild**: HTML5 Canvas, vanilla JavaScript, no dependencies
 
+## Classic and Modern
+
+The splash screen has a **[ CLASSIC ] / [ MODERN ]** toggle above START.
+
+- **Classic** (default) is the original game: `classic.js` is a small Director 7 player that runs
+  the original Score (every sprite, position, fade and sound cue, extracted from `junkyard.dir`)
+  with all of the original Lingo ported line for line, quirks included. It was checked frame by
+  frame against the original running in the [dirplayer-rs](https://github.com/igorlira/dirplayer-rs)
+  Shockwave emulator. See [docs/fidelity.md](docs/fidelity.md).
+- **Modern** (`game.js`) uses the same original screens but plays differently: one continuous run
+  where the car climbs the tow truck's real ramp and flies over the piles onto the car carrier,
+  HD rendering with 4x AI-upscaled art (Real-ESRGAN), 60 Hz motion, synthesized engine sound, a redline
+  boost, RETRY/UPGRADE after a crash, and a GAS
+  button on touch screens. See [docs/modern.md](docs/modern.md).
+
 ## How It Was Made
 
-The original `.dcr` binary was decompiled using [ProjectorRays](https://github.com/ProjectorRays/ProjectorRays) and [LibreShockwave](https://github.com/Quackster/LibreShockwave), extracting 59 bitmaps, 10 sound effects, and 53 Lingo scripts. The game logic was reverse engineered from the decompiled Lingo and rebuilt as a single `game.js` file (~2000 lines).
+The original `.dcr` binary was decompiled using [ProjectorRays](https://github.com/ProjectorRays/ProjectorRays) and [LibreShockwave](https://github.com/Quackster/LibreShockwave), extracting the bitmaps, sounds and 53 Lingo scripts. The Score (every frame's sprites), the bitmaps by member number, the text members and the embedded font were then pulled straight out of `junkyard.dir` with the tools in `tools/`.
 
 Assets were extracted using [shockwave-extractor](https://github.com/bmdragos/shockwave-extractor), a toolkit built during this project for preserving Shockwave games.
 
@@ -23,7 +38,7 @@ See [FINDINGS.md](FINDINGS.md) for the full reverse engineering walkthrough — 
 
 ## Running Locally
 
-Open `index.html` in a browser, or serve it:
+Serve the folder (both modes load JSON data, so opening `index.html` from disk won't work):
 
 ```bash
 python3 -m http.server 8000
@@ -33,19 +48,20 @@ python3 -m http.server 8000
 ## Controls
 
 - **Mouse**: Click buttons on splash/selection screens
-- **Spacebar**: Accelerate during the driving phase
+- **Spacebar**: Accelerate during the driving phase (Modern also shows a GAS button on touch screens; Classic, like the original, needs a keyboard)
 - **Arrow keys**: Not used (the original didn't use them either)
 
-## Debug Mode
+## Debug (Modern)
 
-Press **D** during gameplay to toggle debug overlays showing collision bounds, speed/distance values, tach angle, and jump trajectory.
+Type `debug` in Modern to toggle an overlay of the run's collision geometry (ramp plank, pile and
+carrier outlines) and the car's state.
 
 ## Technical Details
 
 - Native resolution: 425x290, CSS upscaled with `image-rendering: pixelated`
-- Fixed 15fps timestep (faithful to the original Director movie tempo)
+- Classic runs at the Score's 15 fps tempo; Modern simulates and draws its run at 60 Hz
 - All original assets — no re-drawn or AI-generated art
-- Game logic faithfully ported from decompiled Lingo scripts
+- Classic's logic is the decompiled Lingo, ported line for line
 
 ## License
 
