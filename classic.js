@@ -14,11 +14,12 @@ const TEMPO = 15; // Score frame 1 tempo channel: 15 fps
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-// Display size only: the stage stays 425x290 and is shown enlarged with square pixels,
-// by the largest whole factor that fits the window (a fractional fit on small screens).
+// Display size only: the stage stays 425x290 and is shown enlarged to fill the window.
+// A whole factor keeps every pixel the same size; use it when it fills at least 85% of the space.
 function fitStage() {
   const fit = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
-  const scale = fit >= 2 ? Math.floor(fit) : fit;
+  const whole = Math.floor(fit);
+  const scale = whole >= 1 && whole / fit >= 0.85 ? whole : fit;
   canvas.style.width = Math.floor(STAGE_W * scale) + 'px';
   canvas.style.height = Math.floor(STAGE_H * scale) + 'px';
 }

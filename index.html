@@ -30,7 +30,9 @@ canvas {
   var files = mode === 'modern'
     ? ['kids-font.js', 'engine-audio.js', 'modern-gauges.js', 'modern-jump.js', 'game.js']
     : ['kids-font.js', 'classic.js'];
-  files.forEach(function (f) { var s = document.createElement('script'); s.src = f; s.async = false; document.body.appendChild(s); });
+  // bump VERSION on each release so browsers don't keep running stale scripts
+  var VERSION = '2026-10-23b';
+  files.forEach(function (f) { var s = document.createElement('script'); s.src = f + '?v=' + VERSION; s.async = false; document.body.appendChild(s); });
 })();
 </script>
 </body>
