@@ -14,6 +14,17 @@ const TEMPO = 15; // Score frame 1 tempo channel: 15 fps
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
+// Display size only: the stage stays 425x290 and is shown enlarged with square pixels,
+// by the largest whole factor that fits the window (a fractional fit on small screens).
+function fitStage() {
+  const fit = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+  const scale = fit >= 2 ? Math.floor(fit) : fit;
+  canvas.style.width = Math.floor(STAGE_W * scale) + 'px';
+  canvas.style.height = Math.floor(STAGE_H * scale) + 'px';
+}
+window.addEventListener('resize', fitStage);
+fitStage();
+
 // Director keeps a channel puppeted after puppetSound(n, member) until
 // puppetSound(n, 0); this movie never releases channel 1. Unverified against
 // a real Shockwave player (dirplayer-rs does not model it) — see docs/fidelity.md.
