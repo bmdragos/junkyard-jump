@@ -829,22 +829,30 @@ stateUpdate.safe = function () {
   else if (rightButton()) setState('run');
 };
 
-// crash / blown engine / missed landing: pay the repair, then go again or upgrade
-function repairDialog(text, left) {
-  twoButtonDialog('crashtext', text + '  Repairs will cost $' + game.repairCost + '.00.  You have ' + money() + '.', left, 'UPGRADE');
+// crash / blown engine / missed landing: pay the repair, then go again or upgrade.
+// Each is drawn from its own Score frame (314, 335, 340): that screen's text box and the
+// original wording, which fit; Modern adds the two buttons laid out as on frame 307.
+function repairDialog(frame, text, left) {
+  drawFrozenRun();
+  drawScoreFrame(frame, Object.assign({ 59: { text } }, DIALOG_MONEY()), [57, 58, 59, 69, 70]);
+  drawScoreFrame(307, { 62: { text: left }, 63: { text: 'UPGRADE' } }, [60, 61, 62, 63]);
 }
 function repairUpdate() {
   if (game.money < game.repairCost) { setState('crashover'); return; }
   if (leftButton()) { game.money -= game.repairCost; setState('run'); }
   else if (rightButton()) { game.money -= game.repairCost; setState('upgrade'); }
 }
-stateRender.crash = () => repairDialog('You Crashed!\r', 'RETRY');
+const repairCostText = () => '$' + game.repairCost + '.00';
+stateRender.crash = () => repairDialog(314,                                       // crash script 140
+  'You Crashed!\rYou will have to repair your vehicle.  Repairs will cost ' + repairCostText() + '.  You have ' + money() + '.', 'RETRY');
 stateUpdate.crash = repairUpdate;
-stateRender.blownengine = () => repairDialog('You have blown your engine!\r', 'RETRY');
+stateRender.blownengine = () => repairDialog(335,                                 // blown engine script 144
+  'You have blown your engine!\rRepairs will cost ' + repairCostText() + '.', 'RETRY');
 stateUpdate.blownengine = repairUpdate;
 // as in the original, a missed landing still clears the jump: prize paid, next level
 stateEnter.missedramp = function () { game.money += game.prize; game.newLevelOnRun = true; };
-stateRender.missedramp = () => repairDialog('You made the jump, but missed the landing ramp and damaged your vehicle.', 'NEXT JUMP');
+stateRender.missedramp = () => repairDialog(340,                                  // missed script 143
+  'You made the jump, but missed the landing ramp and damaged your vehicle.  Repairs will cost ' + repairCostText() + '.', 'NEXT JUMP');
 stateUpdate.missedramp = repairUpdate;
 
 // game over (frame 323)
