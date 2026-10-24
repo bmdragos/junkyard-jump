@@ -22,8 +22,16 @@ canvas {
 </head>
 <body>
 <canvas id="game" width="425" height="290"></canvas>
-<script src="engine-audio.js"></script>
-<script src="modern-gauges.js"></script>
-<script src="game.js"></script>
+<script>
+// Classic (default) plays the original Score with the ported Lingo: classic.js.
+// Modern is the reimagined rebuild: game.js. The splash toggle switches and reloads.
+(function () {
+  var mode = localStorage.getItem('jj-mode') === 'modern' ? 'modern' : 'classic';
+  var files = mode === 'modern'
+    ? ['kids-font.js', 'engine-audio.js', 'modern-gauges.js', 'modern-jump.js', 'game.js']
+    : ['kids-font.js', 'classic.js'];
+  files.forEach(function (f) { var s = document.createElement('script'); s.src = f; s.async = false; document.body.appendChild(s); });
+})();
+</script>
 </body>
 </html>

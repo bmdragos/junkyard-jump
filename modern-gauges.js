@@ -5,16 +5,17 @@
 // + draws needle each frame.
 //
 // Usage (from game.js):
-//   drawModernGauges(ctx, speed, tachAngle, tachJitter);
+//   drawModernGauges(ctx, speed, tachAngle, tachJitter, dy);
 // ============================================================
 
 const MG_R = 40; // gauge radius (matches 81x81 bitmap footprint)
 
-// Screen positions (matching game.js: gx = GAME_W-170, gy = GAME_H-90)
-const MG_TACH_CX = 295;  // gx + 40
-const MG_TACH_CY = 240;  // gy + 40
-const MG_SPEED_CX = 380; // gx + 125
-const MG_SPEED_CY = 240; // gy + 40
+// Screen positions: the original gauges' Score positions (tachometer sprite 46 at
+// (44, 44), speedometer sprite 45 at (129, 44)), clear of the jump action below.
+const MG_TACH_CX = 44;
+const MG_TACH_CY = 44;
+const MG_SPEED_CX = 129;
+const MG_SPEED_CY = 44;
 
 // Offscreen face caches
 let _mgTachFace = null;
@@ -30,28 +31,37 @@ function _mgRad(angleDeg) {
 // ============================================================
 // MAIN ENTRY POINT
 // ============================================================
-function drawModernGauges(ctx, speed, tachAngle, tachJitter) {
+function drawModernGauges(ctx, speed, tachAngle, tachJitter, dy = 0) {
   const size = MG_R * 2 + 6;
+  const S = (typeof RENDER_SCALE !== 'undefined' ? RENDER_SCALE : 1);
+  if (S !== _mgScale) { _mgTachFace = _mgSpeedFace = null; _mgScale = S; }
+  ctx.save();
+  ctx.translate(0, dy); // slide-in offset
   if (!_mgTachFace) _mgTachFace = _mgRenderFace('tach', size);
   if (!_mgSpeedFace) _mgSpeedFace = _mgRenderFace('speed', size);
 
   // Blit tach face + needle
-  ctx.drawImage(_mgTachFace, MG_TACH_CX - size / 2, MG_TACH_CY - size / 2);
+  ctx.drawImage(_mgTachFace, MG_TACH_CX - size / 2, MG_TACH_CY - size / 2, size, size);
   _mgNeedle(ctx, MG_TACH_CX, MG_TACH_CY, tachAngle + 330 + tachJitter);
 
   // Blit speed face + needle
-  ctx.drawImage(_mgSpeedFace, MG_SPEED_CX - size / 2, MG_SPEED_CY - size / 2);
+  ctx.drawImage(_mgSpeedFace, MG_SPEED_CX - size / 2, MG_SPEED_CY - size / 2, size, size);
   _mgNeedle(ctx, MG_SPEED_CX, MG_SPEED_CY, speed * 3 + 270);
+  ctx.restore();
 }
 
 // ============================================================
 // FACE PRE-RENDERING
 // ============================================================
+// Faces are pre-rendered at the canvas's current pixel scale (game.js renders at up to 4x).
+let _mgScale = 0;
 function _mgRenderFace(type, size) {
+  const S = (typeof RENDER_SCALE !== 'undefined' ? RENDER_SCALE : 1);
   const c = document.createElement('canvas');
-  c.width = size;
-  c.height = size;
+  c.width = size * S;
+  c.height = size * S;
   const g = c.getContext('2d');
+  g.scale(S, S);
   const cx = size / 2;
   const cy = size / 2;
 
